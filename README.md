@@ -30,18 +30,24 @@ major_2/
 ├── major2.h       # Shared header file containing declarations, structs, and prototypes
 ├── main.c         # Main driver: interactive prompt, batch execution, semicolon tokenizing, signal ignoring
 ├── builtin.c      # Built-in command implementations: cd, exit, and custom alias engine
+├── path.c         # Built-in path command (Mark Joseph)
+├── redirection.c  # Standard input (<) and output (>) file descriptor redirection
 └── execute.c      # Command routing: pipelines (2 pipes/3 commands), foreground terminal control, process groups
-├── path.c # Built-in path command (Mark Joseph)
 
 ----------------------------------------------------------------
 ## Design Overview
 1. Interactive & Batch Parser (main.c): Uses fgets() to ingest input lines up to 512 bytes. Semicolons (;) are tokenized via strtok_r() so multiple commands execute sequentially regardless of prior command return status. Empty tokens or redundant whitespace are discarded gracefully without errors.
 2. Terminal & Signal Control (execute.c): The interactive parent shell sets its own process group via setpgid() and claims terminal control using tcsetpgrp(). Terminal signals (SIGINT, SIGTSTP, SIGQUIT) are ignored in the parent shell. Child processes and pipelines are given their own process groups, restored to SIG_DFL, and granted foreground terminal access during execution before returning control to the shell.
 3. Pipeline Engine (execute.c): Multi-stage pipelines (up to 3 commands / 2 pipes) allocate descriptor pairs via pipe() and chain stdout to stdin using dup2(). Unused descriptors are closed in parents and children to prevent deadlocks and EOF stalls.
-4. Built-in Commands (builtin.c): Direct execution of non-external commands including exit, cd (with chdir()), and an alias system (supporting listing, alias -c, alias -r, and alias name='cmd').
+4. Built-in Commands (`builtin.c`, `path.c`):** Direct execution of non-external commands without forking:
+   * `cd [dir]`: Changes directory using `chdir()`, defaulting to `getenv("HOME")` when invoked without arguments.
+   * `exit`: Terminates the shell cleanly after all preceding semicolon-separated commands complete.
+   * `alias`: Supports listing active aliases, defining `alias name='cmd'`, removing single aliases (`alias -r`), and clearing all aliases (`alias -c`).
+   * `path`: Maintains a dynamic list initialized from `PATH`, supporting display (`path`), appending (`path + <dir>`), removal (`path - <dir>`), and restoring the original `PATH` via `atexit()`.
 
 -----------------------------------------------------------------
 ## Complete Specification & Ambiguities Handled
 * Semicolons: Consecutive semicolons (e.g., ; ;) or leading/trailing semicolons are safely skipped without printing error messages.
 * Long Commands: Any input command line exceeding 512 characters triggers an error to stderr and flushes the remaining input line before resuming.
 * Sequential Exit: When exit is chained with other commands using semicolons, all preceding commands execute and wait for completion before the shell terminates.
+* Redirection Syntax:** Assumes spaces surround `<` and `>` per assignment rules; redirection operators and target filenames are stripped from the argument vector before calling `execvp()`.

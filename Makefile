@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -g
 TARGET = newshell
-OBJS = main.o builtin.o execute.o path.o
+OBJS = main.o builtin.o execute.o path.o redirection.o
 
 all: $(TARGET)
 
@@ -19,6 +19,9 @@ execute.o: execute.c major2.h
 
 path.o: path.c major2.h
 	$(CC) $(CFLAGS) -c path.c
+
+redirection.o: redirection.c
+	$(CC) $(CFLAGS) -c redirection.c
 
 clean:
 	rm -f $(OBJS) $(TARGET)

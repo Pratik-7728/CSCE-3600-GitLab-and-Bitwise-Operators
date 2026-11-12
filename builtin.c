@@ -1,14 +1,47 @@
+/*
+ * Course: CSCE 3600 - Systems Programming
+ * Assignment: Major Assignment 2 - The Shell and System Calls
+ * File: builtin.c
+ * Description: Implements shell built-in commands (cd, exit, alias) and dispatches path.
+*/
+
 #include "major2.h"
 Alias alias_table[MAX_ALIASES];
 int alias_count = 0;
 
 
 
-
+// Built-in cd command: Changes the shell's current working directory. 
+// Integrated builtin_cd.c (Radheshyam Shrestrha)
 int builtin_cd(char **args)
 {
+    int argc = 0;
+    while (args[argc] != NULL) {
+        argc++;
+    }
 
-return 1;
+    const char *directory;
+
+    if (argc > 2) {
+        fprintf(stderr, "cd: too many arguments\n");
+        return 1;
+    }
+
+    if (argc == 1) {
+        directory = getenv("HOME");
+        if (directory == NULL || directory[0] == '\0') {
+            fprintf(stderr, "cd: HOME is not set\n");
+            return 1;
+        }
+    } else {
+        directory = args[1];
+    }
+
+    if (chdir(directory) == -1) {
+        perror("cd");
+    }
+
+    return 1;
 }
 
 // Built-in exit: Terminates the shell cleanly

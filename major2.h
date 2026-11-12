@@ -1,3 +1,10 @@
+/*
+ * Course: CSCE 3600 - Systems Programming
+ * Assignment: Major Assignment 2 - THe Shell and System Calls
+ * File: major2.h
+ * Description: Shared header file containing constants, structs, and function prototypes.
+*/
+
 #ifndef MAJOR2_H
 #define MAJOR2_H
 
@@ -34,9 +41,12 @@ extern int shell_is_interactive;
 int handle_builtin(char **args);
 int builtin_exit(char **args);
 int builtin_alias(char **args);
-int builtin_cd(char **args);
+int builtin_cd(char **args);     // builtin.c (Radheshyam Shrestha)
 int builtin_path(char **args);   // path.c (Mark Joseph)
 void path_init(void);            // path.c (Mark Joseph)
+
+// Redirection function
+int setup_redirection(const char *filename, char mode); // redirection.c (Radheshyam Shrestha)
 
 // Execution functions
 void process_command_line(char *line);

@@ -1,3 +1,10 @@
+/*
+ * Course: CSCE 3600 - Systems Programming
+ * Assignment: Major Assignment 2 - The Shell and System Calls
+ * File: execute.c
+ * Description: Handles command execution, pipelines, I/O redirection calls, and terminal signal groups.
+ */
+
 #include "major2.h"
 
 char *trim_whitespace(char *str)
@@ -23,10 +30,8 @@ int parse_arguments(char *cmd, char **args)
     return count;
 }
 
-/*
-* Executes a single command with process group and terminal foreground control.
-* Slots for input_file and output_file are wired for your teammate.
-*/
+ // Executes a single command with process group, terminal foreground control, and optional I/O redirection via setup_redirection() (redirection.c).
+ 
 int execute_simple_command(char **args, char *input_file, char *output_file)
 {
     if (args[0] == NULL) return 0;
@@ -47,7 +52,19 @@ int execute_simple_command(char **args, char *input_file, char *output_file)
             signal(SIGTSTP, SIG_DFL);
             signal(SIGQUIT, SIG_DFL);
         }
-        
+
+        // Apply input/output redirection if specified
+        if (input_file != NULL) {
+            if (setup_redirection(input_file, '<') == -1) {
+                exit(EXIT_FAILURE);
+            }
+        }
+        if (output_file != NULL) {
+            if (setup_redirection(output_file, '>') == -1) {
+                exit(EXIT_FAILURE);
+            }
+        }
+
         execvp(args[0], args);
         fprintf(stderr, "%s: command not found\n", args[0]);
         exit(EXIT_FAILURE);
@@ -85,8 +102,12 @@ int execute_pipeline(char **pipe_cmds, int num_cmds)
 
     pid_t pids[num_cmds];
 
-    for (int i = 0; i < num_cmds; i++) {
-        pids[i] = fork();
+    for (int i = 0; i < num_cmds; i++) { 
+     pids[i] = fork();
+        if (pids[i] < 0) {
+            perror("fork error");
+            return -1;
+        }
         if (pids[i] == 0) {
             if (i == 0) setpgid(0, 0);
             else setpgid(0, pids[0]);
@@ -149,11 +170,11 @@ void execute_single_command(char *cmd_str)
     if (strlen(cmd_str) == 0) return;
 
     // Check alias substitution
+   char expanded[MAX_LINE_LEN];
     for (int i = 0; i < alias_count; i++) {
         size_t nlen = strlen(alias_table[i].name);
         if (strncmp(cmd_str, alias_table[i].name, nlen) == 0 &&
             (cmd_str[nlen] == '\0' || cmd_str[nlen] == ' ' || cmd_str[nlen] == '\t')) {
-            char expanded[MAX_LINE_LEN];
             snprintf(expanded, sizeof(expanded), "%s%s", alias_table[i].command, cmd_str + nlen);
             cmd_str = expanded;
             break;
@@ -178,18 +199,44 @@ void execute_single_command(char *cmd_str)
         return;
     }
 
-    // 2. Argument parsing
+    // 2. Argument & redirection parsing
+    char *input_file = NULL;
+    char *output_file = NULL;
     char *args[MAX_ARGS];
+    int arg_count = 0;
+
     char cmd_copy[MAX_LINE_LEN];
     strncpy(cmd_copy, cmd_str, MAX_LINE_LEN - 1);
     cmd_copy[MAX_LINE_LEN - 1] = '\0';
-    parse_arguments(cmd_copy, args);
-   
+
+    char *tok = strtok(cmd_copy, " \t\n");
+    while (tok != NULL && arg_count < MAX_ARGS - 1) {
+        if (strcmp(tok, "<") == 0) {
+            tok = strtok(NULL, " \t\n");
+            if (tok == NULL) {
+                fprintf(stderr, "redirection: missing input filename\n");
+                return;
+            }
+            input_file = tok;
+        } else if (strcmp(tok, ">") == 0) {
+            tok = strtok(NULL, " \t\n");
+            if (tok == NULL) {
+                fprintf(stderr, "redirection: missing output filename\n");
+                return;
+            }
+            output_file = tok;
+        } else {
+            args[arg_count++] = tok;
+        }
+        tok = strtok(NULL, " \t\n");
+    }
+    args[arg_count] = NULL;
+
     if (args[0] == NULL) return;
 
     // 3. Built-ins check
     if (handle_builtin(args)) return;
     
     // 4. External execution
-    execute_simple_command(args, NULL, NULL);
+    execute_simple_command(args, input_file, output_file);
 }
