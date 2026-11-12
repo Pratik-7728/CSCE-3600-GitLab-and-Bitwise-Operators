@@ -8,9 +8,10 @@
 This assignment is a command-line interpreter (shell) written in C called newshell that executes user commands using Linux system calls (fork, execvp, waitpid, pipe, dup2, and tcsetpgrp) rather than relying on system().
 The shell supports both interactive mode (with a customizable newshell> prompt) and batch mode (reading and echoing commands directly from an input file until EOF). The project engine supports sequential execution of compound commands delimited by semicolons (;), input line bounds checking up to 512 bytes, multi-pipe command pipelines (up to 3 commands / 2 pipes), terminal process group foreground control with signal masking (preventing Ctrl-C and Ctrl-Z from killing the parent shell), custom built-ins, and an alias engine.
 
-Since only two members contributed for the project, we have only two built-in commands:
+Built-in commands implemented:
 1. built-in cd
 2. built-in exit
+3. built-in path
 --------------------------------------------------------------
 
 ## Group Members and Contribution
@@ -18,6 +19,7 @@ Since only two members contributed for the project, we have only two built-in co
 | :--- | :--- | :--- |
 | Pratik Baidhya | pb0974 | Shell engine driver, batch/interactive modes, semicolon sequencing (main.c); pipeline engine, foreground process group management, signal control (execute.c); built-in exit, alias engine (builtin.c) |
 | Radheshyam Shrestha | rs1959 | Built-in cd command with $HOME default fallback (builtin.c); I/O redirection (< and >) (execute.c) |
+| Mark Joseph | mrj0159 | Built-in path command: show, append (+), and remove (-) pathnames; keeps PATH in sync for execvp() and restores the original PATH on exit (path.c) |
 
 ---------------------------------------------------------------
 ## Project Structure
@@ -29,6 +31,7 @@ major_2/
 ├── main.c         # Main driver: interactive prompt, batch execution, semicolon tokenizing, signal ignoring
 ├── builtin.c      # Built-in command implementations: cd, exit, and custom alias engine
 └── execute.c      # Command routing: pipelines (2 pipes/3 commands), foreground terminal control, process groups
+├── path.c # Built-in path command (Mark Joseph)
 
 ----------------------------------------------------------------
 ## Design Overview

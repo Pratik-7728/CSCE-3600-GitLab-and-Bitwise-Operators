@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -g
 TARGET = newshell
-OBJS = main.o builtin.o execute.o
+OBJS = main.o builtin.o execute.o path.o
 
 all: $(TARGET)
 
@@ -16,6 +16,9 @@ builtin.o: builtin.c major2.h
 
 execute.o: execute.c major2.h
 	$(CC) $(CFLAGS) -c execute.c
+
+path.o: path.c major2.h
+	$(CC) $(CFLAGS) -c path.c
 
 clean:
 	rm -f $(OBJS) $(TARGET)

@@ -19,6 +19,9 @@ int main(int argc, char **argv)
 {
     FILE *input_stream = stdin;
 
+    // Load the shell's path list from PATH; original PATH is restored on exit (Mark Joseph)
+    path_init();
+
     // Validate argument count
     if (argc > 2) {
         fprintf(stderr, "usage: %s [batchFile]\n", argv[0]);

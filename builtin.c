@@ -120,6 +120,8 @@ int handle_builtin(char **args)
         return builtin_alias(args);
     if (strcmp(args[0], "cd") == 0)
         return builtin_cd(args);
+    if (strcmp(args[0], "path") == 0)
+        return builtin_path(args);
 
     return 0;
 }

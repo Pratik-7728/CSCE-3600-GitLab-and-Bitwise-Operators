@@ -35,6 +35,8 @@ int handle_builtin(char **args);
 int builtin_exit(char **args);
 int builtin_alias(char **args);
 int builtin_cd(char **args);
+int builtin_path(char **args);   // path.c (Mark Joseph)
+void path_init(void);            // path.c (Mark Joseph)
 
 // Execution functions
 void process_command_line(char *line);
